@@ -1,0 +1,38 @@
+<?php
+
+class ConductorSMSTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array (
+      'name' => t('Conductor API tests'),
+      'description' => t('Verify that conductor workflows behave as expected with existing modules.'),
+      'group' => t('Conductor'),
+    );
+  }
+
+  /**
+   * Implements setUp().
+   */
+  public function setUp() {
+    // Enable any module that you will need in your tests.
+    parent::setUp('conductor', 'conductor_sms');
+  }
+
+  /**
+   * Test that incoming messages 
+   */
+  public function testIncomingMessage() {
+    $number = '5552125121';
+    $message = 'foo';
+    $workflow = conductor_sms_initialize_workflow_incoming_message($number, $message);
+    $this->assertEqual(get_class($workflow), 'ConductorWorkflow', t('The Conductor workflow was successfully instantiated.'));
+    $activityStates = $workflow->state->getActivityState();
+    $this->assertEqual($activityStates['start']->context, array('received_message:number' => $number, 'received_message:message' => $message), t('The message was successfully pased into the workflow for processing.'));
+  }
+
+  public function testOutgoingMessage() {
+  }
+}
