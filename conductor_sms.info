@@ -1,0 +1,7 @@
+name = Conductor SMS
+description = Create arbitrary SMS workflows.
+package = Conductor
+dependencies[] = ctools
+dependencies[] = conductor
+core = 7.x
+files[] = conductor_sms.test
