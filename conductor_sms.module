@@ -1,0 +1,117 @@
+<?php
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function conductor_sms_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'conductor') {
+    return "plugins/$plugin_type";
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function conductor_sms_ctools_plugin_api($owner, $api) {
+  if ($owner == 'conductor' && ($api == 'plugins' || $api == 'workflow')) {
+    return array('version' => 1.0);
+  }
+}
+
+/**
+ * Implements hook_sms_incoming().
+ *
+ * @param $op
+ *   The operation, has three possible values: 'pre process', 'process', and 'post process'.
+ * @param $number
+ *   Is the number from which the message originated.
+ * @param $message
+ *   Is the text of the message.
+ * @param $options
+ *   Is an optional array of extended attributes for the message.
+ */
+function conductor_sms_sms_incoming($op, $number, $message, $options) {
+  if ($op == 'process') {
+    conductor_sms_initialize_workflow_incoming_message($number, $message);
+  }
+}
+
+/**
+ * Load the appropriate workflow
+ */
+function conductor_sms_load_workflow_from_text($op, $number, $message, $options) {
+  $array array(
+    'op' => $op,
+    'number' => $number,
+    'message' => $message,
+    'options' => $options,
+  );
+  if ($workflow = conductor_sms_resume_workflow_from_number($number) {
+    $workflow->state
+  }
+  return conductor_sms_initialize_workflow_from_start();
+}
+
+function conductor_sms_initialize_workflow_incoming_message($number, $message) {
+  $workflow = ;
+  // Create the context
+  $context = array(
+    'received_message:number' => $number,
+    'received_message:message' => $message,
+  );
+  // Get the first activity, we will need it to set the initial context.
+  $start = $workflow->getActivity('start');
+  // Instantiate the state for this workflow instance.
+  $instance = new ConductorInstance();
+  // Create a state object for the first activity.
+  $startState = new ConductorActivityState($start, $instance);
+  // Set the context.
+  $startState->context = $context;
+  // Add the activity's state to the workflow instance state.
+  $instance->setActivityStates(array('start' => $startState));
+  // Actually assign the workflow instance state to the workflow.
+  $workflow->setState($instance);
+  // Finally, start running this workflow.
+  return $workflow;
+
+}
+
+function conductor_sms_initialize_workflow_from_start() {
+  $workflow = new ConductorWorkflow;
+  $workflow->wid = 'new';
+  $workflow->name = 'sms_receive';
+  $workflow->title = 'SMS Receive';
+  $workflow->description = 'Receive an SMS message.';
+  $workflow->api_version = '1.0';
+  // Add and configure workflow activities.
+  $activity = $workflow->newActivity('start');
+  $activity->x = 280;
+  $activity->y = 200;
+  $activity->name = 'start';
+  $activity->title = 'Start';
+  $activity->outputs = array(
+    'sms_receive'
+  );
+  $activity->inputs = array();
+  $activity = $workflow->newActivity('sms_receive');
+  $activity->x = 180;
+  $activity->y = 100;
+  $activity->name = 'received_message';
+  $activity->title = 'Message received';
+  $activity->inputs = array(
+    'start',
+  );
+  $activity->outputs = array(
+    'end'
+  );
+  $activity = $workflow->newActivity('end');
+  $activity->x = 380;
+  $activity->y = 200;
+  $activity->name = 'end';
+  $activity->title = 'End';
+  $activity->inputs = array(
+    'sms_receive'
+  );
+  $activity->outputs = array();
+  return $workflow;
+}
