@@ -27,10 +27,8 @@ class ConductorActivitySMSPrompt extends ConductorActivity {
       $state->activityState->markFailed();
     }
     else if ($state->getContext($this->name . ':message') == FALSE) {
-      //sms_send($number, $this->question);
-      drupal_set_message($this->question);
-      //$state->markSuspended();
-      $state->markCompeted();
+      sms_mobile_commons_send($state->getContext('sms_number'), $this->question);
+      $state->markSuspended();
     }
     else {
       $state->markCompeted();
