@@ -40,26 +40,27 @@ function conductor_sms_sms_incoming($op, $number, $message, $options) {
  * Load the appropriate workflow
  */
 function conductor_sms_load_workflow_from_text($op, $number, $message, $options) {
-  $array array(
+  $array = array(
     'op' => $op,
     'number' => $number,
     'message' => $message,
     'options' => $options,
   );
-  if ($workflow = conductor_sms_resume_workflow_from_number($number) {
-    $workflow->state
+  if ($workflow = conductor_sms_resume_workflow_from_number($number)) {
+    //$workflow->state
   }
   return conductor_sms_initialize_workflow_from_start();
 }
 
 function conductor_sms_initialize_workflow_incoming_message($number, $message) {
-  $workflow = ;
+  $workflow = '';
   // Create the context
   $context = array(
     'received_message:number' => $number,
     'received_message:message' => $message,
   );
   // Get the first activity, we will need it to set the initial context.
+  /*
   $start = $workflow->getActivity('start');
   // Instantiate the state for this workflow instance.
   $instance = new ConductorInstance();
@@ -73,6 +74,7 @@ function conductor_sms_initialize_workflow_incoming_message($number, $message) {
   $workflow->setState($instance);
   // Finally, start running this workflow.
   return $workflow;
+  */
 
 }
 

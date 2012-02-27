@@ -3,22 +3,32 @@
 /**
  * This is the first activity in any workflow.
  */
-class ConductorActivitySMSReceive extends ConductorActivity {
+class ConductorActivitySMSStripSignature extends ConductorActivity {
 
   /**
    * The start method performs no actions.
    */
-  public function process() {
-    /*
-    if (!isset($this->context[$this->name . ':number']) || isset($this->context[$this->name . ':message']) {
-      return FALSE;
+  public function run($workflow) {
+    $state = $this->getState();
+    $context = $state->getContext();
+    $smsMessages = array();
+    foreach ($context as $key => $value) {
+      if (strrpos($key, ':message') !== FALSE) {
+        $smsMessages[$key] = $value;
+      }
     }
-    return TRUE;
-    */
+    $smsMessages = $this->stripCommonSignature($smsMessages);
+    foreach ($smsMessages as $key => $value) {
+      $state->setContext($key, $value);
+    }
+    $state->markCompeted();
   }
 
   /**
+   * Given an array of strings that may end in a common signature, strip the common trailing letters.
    *
+   * @param $strings
+   *   An associative array of strings that may share a common signature.
    */
   public function stripCommonSignature(array $strings) {
     $string_arrays = array();
