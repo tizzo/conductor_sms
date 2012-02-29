@@ -30,18 +30,11 @@ function conductor_sms_ctools_plugin_api($owner, $api) {
  * @param $options
  *   Is an optional array of extended attributes for the message.
  */
-function conductor_sms_sms_mobile_commons_response_alter($output, $message, $sender) {
-  conductor_sms_load_workflow_from_text($sender, $message);
-}
-
-/**
- * Load the appropriate workflow
- */
-function conductor_sms_load_workflow_from_text($number, $message) {
+function conductor_sms_sms_mobile_commons_response_alter(&$output, $message, $number) {
   $storage = conductor_get_storage_handler(variable_get('conductor_default_storage_handler', 'database'));
   // See if we're already having a conversation with this number.
   $pointer = $storage->loadPointer('sms_prompt:' . $number);
-  if ($pointer) {
+  if ($pointer && isset($pointer['workflowName'])) {
     $workflow = conductor_get_workflow($pointer['workflowName']);
     $resume_context = array('sms_prompt:' . $number => array($pointer['activityName'] . ':message' => $message));
     $workflow->getState()->resume($resume_context);
@@ -51,6 +44,9 @@ function conductor_sms_load_workflow_from_text($number, $message) {
     $workflow = conductor_get_workflow('ds_sms_user_registration');
     $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
     $workflow->run();
+  }
+  if (isset($workflow->getState()->context['sms_response'])) {
+    $output = $workflow->getState()->context['sms_response'];
   }
 }
 

@@ -24,10 +24,10 @@ class ConductorActivitySMSPrompt extends ConductorActivity {
   public function run() {
     $state = $this->getState();
     if (!$state->getContext('sms_number')) {
-      $state->activityState->markFailed();
+      $state->markCompeted();
     }
     else if ($state->getContext($this->name . ':message') == FALSE) {
-      sms_mobile_commons_send($state->getContext('sms_number'), $this->question);
+      $state->setContext('sms_response', $this->question);
       $state->markSuspended();
     }
     else {
