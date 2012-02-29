@@ -5,8 +5,6 @@
  */
 class ConductorActivitySMSPrompt extends ConductorActivity {
 
-  public $attribute = '';
-
   public $question = '';
 
   public function option_definition() {
