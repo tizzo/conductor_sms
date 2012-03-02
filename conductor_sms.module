@@ -30,7 +30,7 @@ function conductor_sms_ctools_plugin_api($owner, $api) {
  * @param $options
  *   Is an optional array of extended attributes for the message.
  */
-function conductor_sms_sms_mobile_commons_response_alter(&$output, $message, $number) {
+function conductor_sms_sms_mobile_commons_response_alter(&$output, $message, $number, $keyword = FALSE) {
   $storage = conductor_get_storage_handler(variable_get('conductor_default_storage_handler', 'database'));
   // See if we're already having a conversation with this number.
   $pointer = $storage->loadPointer('sms_prompt:' . $number);
@@ -41,11 +41,14 @@ function conductor_sms_sms_mobile_commons_response_alter(&$output, $message, $nu
   }
   else {
     // TODO: Map a keyword to workflow
-    $workflow = conductor_get_workflow('ds_sms_user_registration');
-    $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
-    $workflow->run();
+    //$keywordMap = module_invoke_all('conductor_sms_keywords');
+    // If it the keyword is set... load the right registration.
+    if ($workflow = conductor_get_workflow('ds_sms_user_registration')) {
+      $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
+      $workflow->run();
+    }
   }
-  if ($workflow->getState()->getContext('sms_response')) {
+  if ($workflow && $workflow->getState()->getContext('sms_response')) {
     $output = $workflow->getState()->getContext('sms_response');
   }
 }
