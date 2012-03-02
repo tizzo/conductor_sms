@@ -9,8 +9,6 @@ class ConductorActivitySMSPrompt extends ConductorActivity {
 
   public function option_definition() {
     $options = parent::option_definition();
-    // The attribute to set in context.
-    $options['attribute'] = array('default' => '');
     $options['question'] = array('default' => '');
     return $options;
   }
@@ -22,7 +20,7 @@ class ConductorActivitySMSPrompt extends ConductorActivity {
   public function run() {
     $state = $this->getState();
     if (!$state->getContext('sms_number')) {
-      $state->markCompeted();
+      $state->markFailed();
     }
     else if ($state->getContext($this->name . ':message') == FALSE) {
       $state->setContext('sms_response', $this->question);

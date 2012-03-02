@@ -39,11 +39,13 @@ function conductor_sms_sms_mobile_commons_response_alter(&$output, $message, $nu
     $resume_context = array('sms_prompt:' . $number => array($pointer['activityName'] . ':message' => $message));
     $workflow->getState()->resume($resume_context);
   }
-  else {
-    // TODO: Map a keyword to workflow
-    //$keywordMap = module_invoke_all('conductor_sms_keywords');
+  else if ($keyword) {
+    // Allow modules to specify sms keyword / workflow matches by implementing hook_conductor_sms_keywords().
+    $keywordMap = module_invoke_all('conductor_sms_keywords');
+    $keyword = strtolower($keyword);
+    $map = module_invoke_all('conductor_sms_keywords');
     // If it the keyword is set... load the right registration.
-    if ($workflow = conductor_get_workflow('ds_sms_user_registration')) {
+    if (isset($map[$keyword]) && $workflow = conductor_get_workflow($map[$keyword])) {
       $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
       $workflow->run();
     }
