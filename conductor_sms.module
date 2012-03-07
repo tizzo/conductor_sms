@@ -32,6 +32,7 @@ function conductor_sms_ctools_plugin_api($owner, $api) {
  */
 function conductor_sms_sms_mobile_commons_response_alter(&$output, $message, $number, $keyword = FALSE) {
   $storage = conductor_get_storage_handler(variable_get('conductor_default_storage_handler', 'database'));
+  $workflow = FALSE;
   // See if we're already having a conversation with this number.
   $pointer = $storage->loadPointer('sms_prompt:' . $number);
   if ($pointer && isset($pointer['workflowName'])) {
