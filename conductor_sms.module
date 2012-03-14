@@ -47,7 +47,6 @@ function conductor_sms_sms_mobile_commons_response_alter(&$output, $context) {
       $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
       $workflow->run();
     }
-    watchdog('sms', $keyword . get_class($workflow));
   }
   if ($workflow && $workflow->getState()->getContext('sms_response')) {
     $output = $workflow->getState()->getContext('sms_response');
