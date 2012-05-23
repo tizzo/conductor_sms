@@ -43,34 +43,47 @@ function conductor_sms_sms_mobile_commons_response_alter(&$output, $context) {
     );
     $workflow->getState()->resume($resume_context);
   }
-  else if (isset($keyword)) {
+  else {
     // Allow modules to specify sms keyword / workflow matches by implementing
     // hook_conductor_sms_keywords().
-    $keywordMap = module_invoke_all('conductor_sms_keywords');
-    $keyword = strtolower($keyword);
     $map = module_invoke_all('conductor_sms_keywords');
-    // If it the keyword is set load the corresponding workflow.
+    if (!empty($keyword)) {
+      $keyword = strtolower($keyword);
+    }
+    else {
+      foreach ($map as $key => $workflow) {
+        if (strpos(strtolower($message), strtolower($key)) !== FALSE) {
+          $keyword = $key;
+        }
+      }
+    }
+    // If it the keyword is set load and run the corresponding workflow.
     if (isset($map[$keyword]) && $workflow = conductor_get_workflow($map[$keyword])) {
       $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
-      // Clear the sms_response to ensure we never resend a stale response.
       $workflow->run();
     }
   }
-  if ($workflow && $workflow->getState()->getContext('sms_response')) {
-    $output = $workflow->getState()->getContext('sms_response');
+  if ($workflow) {
+    if ($workflow->getState()->getContext('sms_response')) {
+      $output = $workflow->getState()->getContext('sms_response');
+    }
+    else {
+      $exceptions = '';
+      $states = $workflow->getState()->getFailedActivities();
+      foreach ($states as $state) {
+        if ($state->getContext('failException')) {
+          $e = $state->getContext('failException');
+          $exceptions .= '<pre>';
+          $exceptions .= $e->getMessage() . ': ' . $e->getTraceAsString();
+          $exceptions .= '</pre>';
+        }
+      }
+      watchdog('conductor_sms', 'An sms failed to generate a response for user with mobile number @number. !exceptions', array('@number' => $number, '!exceptions' => $exceptions), WATCHDOG_ERROR);
+      $output = t('Aw snap! Something went wrong! We\'ll get right on it!');
+    }
   }
   else {
-    $exceptions = '';
-    foreach ($workflow->getState()->getFailedActivities() as $state) {
-      if ($state->getContext('failException')) {
-        $e = $state->getContext('failException');
-        $exceptions .= '<pre>';
-        $exceptions .= $e->getMessage() . ': ' . $e->getTraceAsString();
-        $exceptions .= '</pre>';
-      }
-    }
-    watchdog('conductor_sms', 'An sms failed to generate a response for user with mobile number @number. !exceptions', array('@number' => $number, '!exceptions' => $exceptions), WATCHDOG_CRITICAL);
-    $output = t('Aw snap! Something went wrong! We\'ll get right on it!');
+    watchdog('conductor_sms', 'Text recieved without registered keyword with keyword "@keyword" and message "@message" from "@number"', array('@keyword' => $keyword, '@message' => $message, '@number' => $number));
   }
 }
 
