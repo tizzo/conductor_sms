@@ -33,7 +33,14 @@ function conductor_sms_sms_mobile_commons_response_alter(&$output, $context) {
   $pointer = $storage->loadPointer('sms_prompt:' . $number);
   if ($pointer && isset($pointer['workflowName'])) {
     $workflow = conductor_get_workflow($pointer['workflowName']);
-    $resume_context = array('sms_prompt:' . $number => array($pointer['activityName'] . ':message' => $message));
+    // Resume context resumes wtih the pointer and a context array to hand into
+    // that activity upon resume.
+    $resume_context = array(
+      'sms_prompt:' . $number => array(
+        $pointer['activityName'] . ':message' => $message,
+        'sms_response' => FALSE
+      ),
+    );
     $workflow->getState()->resume($resume_context);
   }
   else if (isset($keyword)) {
@@ -45,11 +52,25 @@ function conductor_sms_sms_mobile_commons_response_alter(&$output, $context) {
     // If it the keyword is set load the corresponding workflow.
     if (isset($map[$keyword]) && $workflow = conductor_get_workflow($map[$keyword])) {
       $workflow->getActivity('start')->getState()->setContext('sms_number', $number);
+      // Clear the sms_response to ensure we never resend a stale response.
       $workflow->run();
     }
   }
   if ($workflow && $workflow->getState()->getContext('sms_response')) {
     $output = $workflow->getState()->getContext('sms_response');
+  }
+  else {
+    $exceptions = '';
+    foreach ($workflow->getState()->getFailedActivities() as $state) {
+      if ($state->getContext('failException')) {
+        $e = $state->getContext('failException');
+        $exceptions .= '<pre>';
+        $exceptions .= $e->getMessage() . ': ' . $e->getTraceAsString();
+        $exceptions .= '</pre>';
+      }
+    }
+    watchdog('conductor_sms', 'An sms failed to generate a response for user with mobile number @number. !exceptions', array('@number' => $number, '!exceptions' => $exceptions), WATCHDOG_CRITICAL);
+    $output = t('Aw snap! Something went wrong! We\'ll get right on it!');
   }
 }
 
