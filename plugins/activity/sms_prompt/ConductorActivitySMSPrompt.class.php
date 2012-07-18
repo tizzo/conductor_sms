@@ -22,7 +22,7 @@ class ConductorActivitySMSPrompt extends ConductorActivity {
     if (!$state->getContext('sms_number')) {
       $state->markFailed();
     }
-    else if ($state->getContext($this->name . ':message') == FALSE) {
+    else if ($state->getContext($this->name . ':message') === FALSE) {
       $state->setContext('sms_response', $this->question);
       $state->markSuspended();
     }
